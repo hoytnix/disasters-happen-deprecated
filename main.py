@@ -136,13 +136,13 @@ class MyApp:
                     )
 
                     # Do.
-                    if self.upload_file(fp = local_path):
+                    if self.upload_file(remote_path = remote_path, local_path = local_path):
                         self.db_save()
 
-    def upload_file(self, fp, chunk_mb = 4):
+    def upload_file(self, local_path, remote_path, chunk_mb = 4):
         # Uploader.
-        file_size = os.path.getsize(fp)
-        f = open(fp, 'rb')
+        file_size = os.path.getsize(local_path)
+        f = open(local_path, 'rb')
         uploader = self.client.get_chunked_uploader(f, length = file_size)
         while uploader.offset < file_size:
             try:
