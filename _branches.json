@@ -1,0 +1,40 @@
+{
+    "local": {
+        
+        "scripts": {
+            "discoverable": true,
+            "dir": "~/bin/scripts",
+            "files": {
+                
+            }
+        },
+        
+        "music": {
+            "discoverable": true,
+            "dir": "~/Music",
+            "files": {
+
+            }
+        },
+        
+        "pictures": {
+            "discoverable": true,
+            "dir": "~/Pictures",
+            "files": {
+
+            }
+        },
+        
+        "documents": {
+            "discoverable": true,
+            "dir": "~/Documents",
+            "files": {
+
+            }
+        }    
+    },
+
+    "remote": {
+
+    }
+}
