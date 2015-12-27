@@ -1,5 +1,7 @@
-import os, sys, json, time, math
+import os, sys, json
 from hashlib import md5
+from math import floor
+from time import strftime
 
 import dropbox
 from dropbox.client import DropboxClient
@@ -15,28 +17,48 @@ def file_checksum(fp):
     except: # File does not exist yet.
         return ""
 
-def est_upload_time(file_size=549453824, web_speed=500):
-    # .35s
-    # 4.5s
-    # 3.9m
+def est_upload_time(length):
+    d = [
+        0, #h [0]
+        0, #m [1] 
+        0, #s [2]
+    ]
+    d[1], d[2] = divmod(length, 60)
+    d[0], d[1] = divmod(d[1], 60)
 
-    web_speed *= 1024
-    length = file_size / web_speed
-    m, s = divmod(length, 60)
-    h, m = divmod(m, 60)
+    # Find largest denominator.
+    characteristic_index = 2
+    for n in range(d.__len__()):
+        if d[n] > 0:
+            characteristic_index = n
+            break
+    characteristic = d[characteristic_index]
 
-    if h > 0:
-        x = ('%.3f' % h)[:3]
-        c = 'h'
-    elif m > 0:
-        x = ('%.3f' % m)[:3]
-        c = 'm'
-    elif s > 0:
-        x = ('%.3f' % s)[:3]
-        c = 's'
-    if x[-1] == '.':
-        x = ' ' + x[:-1]
-    return x + c
+    # Find second largest.
+    mantissa = 0
+    mantissa_index = characteristic_index + 1
+    if mantissa_index == d.__len__():
+        pass
+    else:
+        mantissa = d[mantissa_index]
+    
+    # STRING FORMATTING
+    time_str_r = '{decimal}{unit}'
+    decimal = 0
+    unit = ['h', 'm', 's'][characteristic_index]
+    # ...
+    if characteristic < 1: # 0s - < 1s
+        decimal = 0
+    else: # N.NN
+        decimal = '%.1f' % (characteristic + (mantissa / 60))
+    # format
+    if characteristic < 10:
+        time_str = time_str_r.format(decimal = decimal, unit = unit)
+        time_str = time_str.replace('.0', '')
+    else:
+        time_str = time_str_r.format(decimal = int(characteristic), unit = unit)
+    # padding
+    return ' ' * (4 - time_str.__len__()) + time_str
 
 class MyApp:
     def __init__(self):
@@ -53,7 +75,7 @@ class MyApp:
 
         # Populate.
         self.remote_files = self.get_remote_files()
-        self.db['local'] = self.get_local_files(db_obj = self.db)
+        self.get_local_files(db_obj = self.db)
 
         # Backup!
         self.push()
@@ -106,13 +128,13 @@ class MyApp:
                 if upload:
                     file_size = os.path.getsize(local_path)
                     # UI.
-                    web_speed = 500 #KBps
+                    web_speed = 500 * 1024 #KBps
                     term_width = getTerminalSize()[0]
-                    term_left = math.floor( (term_width - 15) / 2 )
+                    term_left = floor( (term_width - 15) / 2 )
 
                     # Time.
-                    time_str = time.strftime('%I:%M') # 10 / 80; inc. spaces
-                    time_est = est_upload_time(file_size = file_size, web_speed = web_speed)
+                    time_str = strftime('%I:%M') # 10 / 80; inc. spaces
+                    time_est = est_upload_time(file_size / web_speed)
                     # Paths.
                     local_path_str = local_path
                     if local_path.__len__() > term_left:
@@ -136,8 +158,13 @@ class MyApp:
                     )
 
                     # Do.
-                    if self.upload_file(remote_path = remote_path, local_path = local_path):
-                        self.db_save()
+                    try:
+                        if self.upload_file(remote_path = remote_path, local_path = local_path):
+                            self.db_save()
+                    except (KeyboardInterrupt, SystemExit):
+                        sys.exit('\nGoodbye!')
+                    except:
+                        pass
 
     def upload_file(self, local_path, remote_path, chunk_mb = 4):
         # Uploader.
@@ -224,7 +251,7 @@ class MyApp:
             with open(self.db_file_path, 'r') as db_file:
                 db = json.load(db_file)
         except:
-            pass
+            print(sys.exc_info()[0])
         return db
 
 def main():

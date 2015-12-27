@@ -1,3 +1,4 @@
 branches.json
 secret.*
 __pycache__/
+*-backup

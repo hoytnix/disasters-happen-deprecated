@@ -31,7 +31,14 @@
             "files": {
 
             }
-        }    
+        },
+
+        "backups": {
+            "discoverable": true,
+            "dir": "~/Backups",
+            "files": {}
+        },
+
     },
 
     "remote": {

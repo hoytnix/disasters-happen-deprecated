@@ -32,6 +32,16 @@ v0.2
         + Chunk size.
         + Verbosity.
     + Tracking should have `.gitignore`-like regex for ignoring files.
-+ Installation.
++   Installation:
     + Step-by-step walkthrough for setting up an API key.
     + `secret.py`-file generation.
++ TUI:
+    + `[✓]` Time precision. 
+    + Real speed test.
+    + Replace `~/` with blank-space. (It's *secret* for a reason.)
++ Packaging:
+    + Sub-packaging
+    + Multi-level folder discovery 
++ Files:
+    + Deletion mode
+    + Rename mode
