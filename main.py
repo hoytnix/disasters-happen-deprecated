@@ -1,150 +1,56 @@
 import os, sys, json
-from hashlib import md5
 from math import floor
 from time import strftime
 
+from Disasterous.console  import Console
+from Disasterous.fs       import File
+from Disasterous.services import Dropbox
+from Disasterous.config   import Config
+from Disasterous.paths    import fp_json
+from Disasterous.jsondb   import Jsondb
+
 import dropbox
-from dropbox.client import DropboxClient
-from dropbox.session import DropboxSession
-
-from secret  import secret_key, app_key
-from console import Console
-
-def file_checksum(fp):
-    try:
-        with open(fp, 'rb') as f:
-            return md5(f.read()).hexdigest()
-    except: # File does not exist yet.
-        return ""
-
-def est_upload_time(length):
-    d = [
-        0, #h [0]
-        0, #m [1] 
-        0, #s [2]
-    ]
-    d[1], d[2] = divmod(length, 60)
-    d[0], d[1] = divmod(d[1], 60)
-
-    # Find largest denominator.
-    characteristic_index = 2
-    for n in range(d.__len__()):
-        if d[n] > 0:
-            characteristic_index = n
-            break
-    characteristic = d[characteristic_index]
-
-    # Find second largest.
-    mantissa = 0
-    mantissa_index = characteristic_index + 1
-    if mantissa_index == d.__len__():
-        pass
-    else:
-        mantissa = d[mantissa_index]
-    
-    # STRING FORMATTING
-    time_str_r = '{decimal}{unit}'
-    decimal = 0
-    unit = ['h', 'm', 's'][characteristic_index]
-    # ...
-    if characteristic < 1: # 0s - < 1s
-        decimal = 0
-    else: # N.NN
-        decimal = '%.1f' % (characteristic + (mantissa / 60))
-    # format
-    if characteristic < 10:
-        time_str = time_str_r.format(decimal = decimal, unit = unit)
-        time_str = time_str.replace('.0', '')
-    else:
-        time_str = time_str_r.format(decimal = int(characteristic), unit = unit)
-    # padding
-    return ' ' * (4 - time_str.__len__()) + time_str
-
-class File:
-    def __init__(self, fp):
-        self.full_path = os.path.expanduser(fp)
-
-    def __repr__(self):
-        return '<File {path}>'.format(path=self.full_path)
-
-    def join(self, path):
-        '''
-        https://docs.python.org/3/library/os.path.html#os.path.join
-
-        If a component is an absolute path, all previous components are 
-        thrown away and joining continues from the absolute path component.
-        '''
-
-        if type(path) is str:
-            self.full_path = os.path.join(self.full_path, path)
-        elif type(path) is list:
-            path = [x[1:] if x[0] is '/' else x for x in path]
-            self.full_path = os.path.join(self.full_path, *path)
-
-    def checksum(self):
-        try:
-            with open(self.full_path, 'rb') as f:
-                return md5(f.read()).hexdigest()
-        except: # File does not exist yet.
-            return ""
-
-    def exists(self):
-        return os.path.isfile(self.full_path)
-
-    def size(self):
-        return os.path.getsize(self.full_path)
 
 class MyApp:
     def __init__(self):
-        # Init console.
-        self.term = self.init_term()
+        # Init self.
+        self.config = Config()
+        if self.config.verbosity:
+            self.term = Console()
 
         # Init API service.
-        try:
-            self.client = DropboxClient(oauth2_access_token = secret_key)
-            self.client.account_info()
-        except:
-            sys.exit('')
+        self.service = self.init_service()
 
         # Be polite.
-        self.term.secho('Welcome!\nLogged in to Dropbox...\n')
+        if self.config.verbosity:
+            msg = 'Welcome!\nLogged in to {service}...\n'.format(service=self.config.service)
+            self.term.secho(msg)
 
         # Init database.
-        self.db_file_path = 'branches.json'
-        self.db = self.db_load()
+        self.branch_json = Jsondb(fp=fp_json['branches'])
+        self.branch_store = self.branch_json.store
 
         # Populate.
         self.remote_files = self.get_remote_files()
-        self.get_local_files(db_obj = self.db)
+        self.get_local_files(db_obj = self.branch_store)
 
         # Backup!
-        #self.push()
-    
-    def init_term(self):
-        expression = '{time} {est} {local_path} => {remote_path}'
-        layout = {
-            'local_path': {
-                'width': 0.5,
-                'align': 'left'
-            },
-            'remote_path': {
-                'width': 0.5,
-                'align': 'left'
-            },
-            'time': {
-                'width': 5
-            },
-            'est': {
-                'width': 4
-            }
-        }
-        return Console(expression = expression, layout = layout)
+        self.push()
+
+    def init_service(self):
+        s = None
+        name = self.config.service
+        if name == 'Dropbox':
+            s = Dropbox()
+        else: #Default to Dropbox
+            s = Dropbox()
+        return s.service
 
     def push(self):
         # Init.
         file_mode = dropbox.files.WriteMode('overwrite')
-        local_branch  = self.db['local']
-        remote_branch = self.db['remote'] 
+        local_branch  = self.branch_store['local']
+        remote_branch = self.branch_store['remote'] 
 
         # Iterate through packages.
         for package_name in local_branch:
@@ -189,33 +95,31 @@ class MyApp:
                     # File obj
                     local_file = File(fp=local_path)
 
-                    # Print.
-                    msg_args = {
-                        'local_path': local_path,
-                        'remote_path': remote_path,
-                        'time': strftime('%I:%M'),
-                        'est': est_upload_time(local_file.size() / (500 * 1024))
-                    }
-                    self.term.echo(args=msg_args)
+                    # Verbosity.
+                    if self.config.verbosity:
+                        msg_args = {
+                            'local_path': local_file.echoable(),
+                            'remote_path': remote_path,
+                            'time': strftime('%I:%M'),
+                            'est': self.term.est_upload_time(local_file.size() / (500 * 1024))
+                        }
+                        self.term.echo(args=msg_args)
 
                     # Do.
-                    try:
-                        if self.upload_file(remote_path = remote_path, local_path = local_path):
-                            self.db_save()
-                    except (KeyboardInterrupt, SystemExit):
-                        sys.exit('\nGoodbye!')
-                    except:
-                        pass
+                    if self.upload_file(remote_path = remote_path, local_path = local_path):
+                        if not self.config.development:
+                            self.branch_json.save()
+                        
 
-    def upload_file(self, local_path, remote_path, chunk_mb = 4):
+    def upload_file(self, local_path, remote_path):
         # Uploader.
-        file_size = os.path.getsize(local_path)
-        f = open(local_path, 'rb')
-        uploader = self.client.get_chunked_uploader(f, length = file_size)
-        while uploader.offset < file_size:
+        file_obj = File(fp=local_path)
+        uploader = self.service.get_chunked_uploader(file_obj.obj(), length = file_obj.size())
+        while uploader.offset < file_obj.size():
             try:
-                upload = uploader.upload_chunked(chunk_size=(chunk_mb * 1048576))
+                upload = uploader.upload_chunked(chunk_size=self.config.chunks)
             except:
+                print(sys.exc_info()[0], sys.exc_info()[2].tb_lineno)
                 return False
                 # perform error handling and retry logic
         uploader.finish(path = remote_path, overwrite = True)
@@ -287,23 +191,6 @@ class MyApp:
     def get_remote_files(self):
         #return [entry for entry in self.service.files_list_folder('').entries]
         return None
-
-    def db_save(self):
-        try:
-            with open(self.db_file_path, 'w') as db_file:
-                json.dump(obj = self.db, fp = db_file, indent = 4)
-            return True
-        except:
-            return False
-
-    def db_load(self):
-        db = {}
-        try:
-            with open(self.db_file_path, 'r') as db_file:
-                db = json.load(db_file)
-        except:
-            print(sys.exc_info()[0])
-        return db
 
 def main():
     x = MyApp()

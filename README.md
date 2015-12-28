@@ -25,23 +25,25 @@ v0.2
 
 +   Classification:
     + `[✓]` Console-class for TUI.
-    + Service-class interface for adding multiple API supports.
+    + `[✓]` File-class.
+    + `[✓]` Service-class interface for adding multiple API supports.
 +   Configuration:
     + Seperate `branches` database from config of *what* to track.
-    + Universal config file:
+    + `[✓]` Universal config file:
         + Chunk size.
         + Verbosity.
-    + Tracking should have `.gitignore`-like regex for ignoring files.
+    + `[ ]` Tracking should have `.gitignore`-like regex for ignoring files.
 +   Installation:
     + Step-by-step walkthrough for setting up an API key.
     + `secret.py`-file generation.
-+ TUI:
++   TUI:
     + `[✓]` Time precision. 
     + Real speed test.
-    + Replace `~/` with blank-space. (It's *secret* for a reason.)
-+ Packaging:
+    + `[✓]` Replace `~/` with blank-space. (It's *secret* for a reason.)
++   Packaging:
     + Sub-packaging
     + Multi-level folder discovery 
-+ Files:
++   Files:
     + Deletion mode
     + Rename mode
+    + `[✓]` Properties. (size, path, checksum, etc.)

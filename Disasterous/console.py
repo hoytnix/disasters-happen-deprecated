@@ -2,14 +2,21 @@ import fcntl, termios, struct, os
 
 from math import floor
 
+from Disasterous.jsondb import Jsondb
+from Disasterous.paths  import fp_json
+
 class Console:
-    def __init__(self, expression, layout):
-        # 0. Variable init.
+    def __init__(self):
+        # Stored inits.
+        self.json  = Jsondb(fp = fp_json['console'])
+        self.store = self.json.store 
+        self.expression = self.store['expression']
+        self.layout = self.store['layout']
+
+        # Function inits.
         self.term_size = self.get_term_size() #W,H
         self.width = self.term_size[0]
         self.height = self.term_size[1]
-        self.expression = expression
-        self.layout = layout
 
     def secho(self, msg):
         print(msg)
@@ -88,32 +95,45 @@ class Console:
 
         return int(cr[1]), int(cr[0])
 
-if __name__ == '__main__':
-    msg_r = '{foo} {bar} => {hello} {spam}'
-    msg_args = {
-        'foo': '1',
-        'bar': 'abc',
-        'spam': 'no',
-        'hello': 'world'
-    }
-    msg_format = {
-        'foo': {
-            'width': 4,
-            'align': 'left'
-        },
-        'bar': {
-            'width': 0.5,
-            'align': 'right'
-        },
-        'spam': {
-            'width': 0.25,
-            'align': 'right'
-        },
-        'hello': {
-            'width': 0.25,
-            'align': 'left'
-        }
-    }
+    def est_upload_time(self, length):
+        d = [
+            0, #h [0]
+            0, #m [1] 
+            0, #s [2]
+        ]
+        d[1], d[2] = divmod(length, 60)
+        d[0], d[1] = divmod(d[1], 60)
 
-    term = Console(expression = msg_r, layout = msg_format)
-    term.echo(msg_args)
+        # Find largest denominator.
+        characteristic_index = 2
+        for n in range(d.__len__()):
+            if d[n] > 0:
+                characteristic_index = n
+                break
+        characteristic = d[characteristic_index]
+
+        # Find second largest.
+        mantissa = 0
+        mantissa_index = characteristic_index + 1
+        if mantissa_index == d.__len__():
+            pass
+        else:
+            mantissa = d[mantissa_index]
+        
+        # STRING FORMATTING
+        time_str_r = '{decimal}{unit}'
+        decimal = 0
+        unit = ['h', 'm', 's'][characteristic_index]
+        # ...
+        if characteristic < 1: # 0s - < 1s
+            decimal = 0
+        else: # N.NN
+            decimal = '%.1f' % (characteristic + (mantissa / 60))
+        # format
+        if characteristic < 10:
+            time_str = time_str_r.format(decimal = decimal, unit = unit)
+            time_str = time_str.replace('.0', '')
+        else:
+            time_str = time_str_r.format(decimal = int(characteristic), unit = unit)
+        # padding
+        return ' ' * (4 - time_str.__len__()) + time_str

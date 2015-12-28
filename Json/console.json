@@ -1,0 +1,20 @@
+{   
+    "layout": {
+        "local_path": {
+            "width": 0.5,
+            "align": "left"
+        },
+        "remote_path": {
+            "width": 0.5,
+            "align": "left"
+        },
+        "time": {
+            "width": 5
+        },
+        "est": {
+            "width": 4
+        }
+    },
+    
+    "expression": "{time} {est} {local_path} => {remote_path}"
+}
