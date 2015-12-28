@@ -60,6 +60,40 @@ def est_upload_time(length):
     # padding
     return ' ' * (4 - time_str.__len__()) + time_str
 
+class File:
+    def __init__(self, fp):
+        self.full_path = os.path.expanduser(fp)
+
+    def __repr__(self):
+        return '<File {path}>'.format(path=self.full_path)
+
+    def join(self, path):
+        '''
+        https://docs.python.org/3/library/os.path.html#os.path.join
+
+        If a component is an absolute path, all previous components are 
+        thrown away and joining continues from the absolute path component.
+        '''
+
+        if type(path) is str:
+            self.full_path = os.path.join(self.full_path, path)
+        elif type(path) is list:
+            path = [x[1:] if x[0] is '/' else x for x in path]
+            self.full_path = os.path.join(self.full_path, *path)
+
+    def checksum(self):
+        try:
+            with open(self.full_path, 'rb') as f:
+                return md5(f.read()).hexdigest()
+        except: # File does not exist yet.
+            return ""
+
+    def exists(self):
+        return os.path.isfile(self.full_path)
+
+    def size(self):
+        return os.path.getsize(self.full_path)
+
 class MyApp:
     def __init__(self):
         # Init console.
@@ -84,7 +118,7 @@ class MyApp:
         self.get_local_files(db_obj = self.db)
 
         # Backup!
-        self.push()
+        #self.push()
     
     def init_term(self):
         expression = '{time} {est} {local_path} => {remote_path}'
@@ -95,7 +129,7 @@ class MyApp:
             },
             'remote_path': {
                 'width': 0.5,
-                'align': 'right'
+                'align': 'left'
             },
             'time': {
                 'width': 5
@@ -152,13 +186,15 @@ class MyApp:
 
                 # Do upload?
                 if upload:
+                    # File obj
+                    local_file = File(fp=local_path)
 
                     # Print.
                     msg_args = {
                         'local_path': local_path,
                         'remote_path': remote_path,
                         'time': strftime('%I:%M'),
-                        'est': est_upload_time(os.path.getsize(local_path) / (500 * 1024))
+                        'est': est_upload_time(local_file.size() / (500 * 1024))
                     }
                     self.term.echo(args=msg_args)
 
@@ -198,23 +234,33 @@ class MyApp:
             
             # Is discoverable mode?
             if package['discoverable']:
-                # Path must end in / for path-joining.
-                discovery_path = os.path.expanduser(package['dir']) + '/'
+                discovery_path = os.path.expanduser(package['dir'])
 
                 # Iterate files and directories.
                 for dirpath, dirnames, filenames in os.walk(discovery_path):
                     sub_package_name = dirpath.replace(discovery_path, '')
+                    if sub_package_name.__len__() == 0:
+                        sub_package_name = None
 
                     # Iterate files.
-                    for filename in filenames:
-                        # Init.
-                        file_key = "{sub_package}/{file_name}".format(sub_package=sub_package_name, 
-                            file_name=filename
-                        )
-                        full_path = os.path.join(discovery_path, sub_package_name, filename)
+                    for file_name in filenames:
+                        file_obj = File(discovery_path)
+                        if sub_package_name:
+                            # Init.
+                            file_key = '{sub_package}/{file_name}'.format(
+                                sub_package=sub_package_name, 
+                                file_name=file_name
+                            )
+                            file_obj.join([sub_package_name, file_name])
+                            if not file_obj.exists():
+                                print(file_obj)
+                                sys.exit()
+                        else:
+                            file_key = file_name
+                            file_obj.join(file_key)
 
                         # Discovery should be bi-directional.
-                        checksum = file_checksum(full_path)
+                        checksum = file_obj.checksum()
                         if file_key in package:
                             # Compare checksums.
                             if package['files'][file_key]['checksum'] != checksum:
@@ -228,9 +274,9 @@ class MyApp:
             # Not discoverabe, probably secret.
             else:
                 for file_key in package['files']:
-                    discovery_path = os.path.expanduser(package['dir']) + '/'
-                    full_path = os.path.join(discovery_path, file_key)
-                    checksum = file_checksum(full_path)
+                    file_obj = File(fp=package['dir'])
+                    file_obj.join(file_key)                    
+                    checksum = file_obj.checksum()
                     package['files'][file_key]['checksum'] = checksum
 
             # Update branch.
