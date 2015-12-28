@@ -8,7 +8,7 @@ from dropbox.client import DropboxClient
 from dropbox.session import DropboxSession
 
 from secret  import secret_key, app_key
-from console import getTerminalSize
+from console import Console
 
 def file_checksum(fp):
     try:
@@ -62,12 +62,18 @@ def est_upload_time(length):
 
 class MyApp:
     def __init__(self):
+        # Init console.
+        self.term = self.init_term()
+
         # Init API service.
         try:
             self.client = DropboxClient(oauth2_access_token = secret_key)
             self.client.account_info()
         except:
             sys.exit('')
+
+        # Be polite.
+        self.term.secho('Welcome!\nLogged in to Dropbox...\n')
 
         # Init database.
         self.db_file_path = 'branches.json'
@@ -80,6 +86,26 @@ class MyApp:
         # Backup!
         self.push()
     
+    def init_term(self):
+        expression = '{time} {est} {local_path} => {remote_path}'
+        layout = {
+            'local_path': {
+                'width': 0.5,
+                'align': 'left'
+            },
+            'remote_path': {
+                'width': 0.5,
+                'align': 'right'
+            },
+            'time': {
+                'width': 5
+            },
+            'est': {
+                'width': 4
+            }
+        }
+        return Console(expression = expression, layout = layout)
+
     def push(self):
         # Init.
         file_mode = dropbox.files.WriteMode('overwrite')
@@ -126,36 +152,15 @@ class MyApp:
 
                 # Do upload?
                 if upload:
-                    file_size = os.path.getsize(local_path)
-                    # UI.
-                    web_speed = 500 * 1024 #KBps
-                    term_width = getTerminalSize()[0]
-                    term_left = floor( (term_width - 15) / 2 )
-
-                    # Time.
-                    time_str = strftime('%I:%M') # 10 / 80; inc. spaces
-                    time_est = est_upload_time(file_size / web_speed)
-                    # Paths.
-                    local_path_str = local_path
-                    if local_path.__len__() > term_left:
-                        local_path_str = local_path_str[(term_left * -1):] # Last N characters
-                        x = local_path_str.split('/')
-                        if x.__len__() > 1:
-                            local_path_str = '/'.join(x[1:]) # Right-to-Left
-                    local_path_str += ' ' * (term_left - local_path_str.__len__())
-
-                    remote_path_str = remote_path[:term_left] # First N characters
-                    x = remote_path_str.split('/')
-                    if x.__len__() > 1:
-                        remote_path_str = '/'.join(x[:-1])
 
                     # Print.
-                    print('{time} {est} {local_path} => {remote_path}'.format(local_path = local_path_str,
-                            remote_path = remote_path_str,
-                            time = time_str,
-                            est = time_est
-                        )
-                    )
+                    msg_args = {
+                        'local_path': local_path,
+                        'remote_path': remote_path,
+                        'time': strftime('%I:%M'),
+                        'est': est_upload_time(os.path.getsize(local_path) / (500 * 1024))
+                    }
+                    self.term.echo(args=msg_args)
 
                     # Do.
                     try:

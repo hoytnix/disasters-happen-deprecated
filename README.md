@@ -24,7 +24,7 @@ Todo
 v0.2
 
 +   Classification:
-    + Console-class for TUI.
+    + `[✓]` Console-class for TUI.
     + Service-class interface for adding multiple API supports.
 +   Configuration:
     + Seperate `branches` database from config of *what* to track.
