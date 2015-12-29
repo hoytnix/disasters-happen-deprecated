@@ -41,8 +41,7 @@ v0.2
     + Real speed test.
     + `[✓]` Replace `~/` with blank-space. (It's *secret* for a reason.)
 +   Packaging:
-    + Sub-packaging
-    + Multi-level folder discovery 
+    + `[✓]` Multi-level folder discovery 
 +   Files:
     + Deletion mode
     + Rename mode

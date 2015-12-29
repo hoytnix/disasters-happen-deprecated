@@ -3,5 +3,6 @@
     "chunks": "4MB",
     "ignore": ["secret", "backup"],
     "development": true,
-    "service": "Dropbox"
+    "service": "Dropbox",
+    "branch": "alisa"
 }

@@ -1,4 +1,3 @@
-branches.json
-secret.*
-__pycache__/
-*-backup
+secret*
+Branches/
+*__pycache__/

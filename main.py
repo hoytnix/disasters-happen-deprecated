@@ -1,9 +1,9 @@
 import os, sys, json
-from math import floor
+
 from time import strftime
 
 from Disasterous.console  import Console
-from Disasterous.fs       import File
+from Disasterous.fs       import File, LocalFS
 from Disasterous.services import Dropbox
 from Disasterous.config   import Config
 from Disasterous.paths    import fp_json
@@ -26,16 +26,15 @@ class MyApp:
             msg = 'Welcome!\nLogged in to {service}...\n'.format(service=self.config.service)
             self.term.secho(msg)
 
-        # Init database.
-        self.branch_json = Jsondb(fp=fp_json['branches'])
-        self.branch_store = self.branch_json.store
+        # Persistent storage.
+        local = LocalFS(branch=self.config.branch)
 
         # Populate.
-        self.remote_files = self.get_remote_files()
-        self.get_local_files(db_obj = self.branch_store)
+        #self.remote_files = self.get_remote_files()
+        #self.get_local_files(db_obj = self.branch_store)
 
         # Backup!
-        self.push()
+        #self.push()
 
     def init_service(self):
         s = None
@@ -124,69 +123,6 @@ class MyApp:
                 # perform error handling and retry logic
         uploader.finish(path = remote_path, overwrite = True)
         return True
-
-    def get_local_files(self, db_obj):
-        # Init.
-        local_files = []
-        branch = db_obj['local']
-        packages = [key for key in branch]
-        
-        # Iterate packages.
-        for package_name in packages:
-            # Get package. 
-            package = branch[package_name]
-            
-            # Is discoverable mode?
-            if package['discoverable']:
-                discovery_path = os.path.expanduser(package['dir'])
-
-                # Iterate files and directories.
-                for dirpath, dirnames, filenames in os.walk(discovery_path):
-                    sub_package_name = dirpath.replace(discovery_path, '')
-                    if sub_package_name.__len__() == 0:
-                        sub_package_name = None
-
-                    # Iterate files.
-                    for file_name in filenames:
-                        file_obj = File(discovery_path)
-                        if sub_package_name:
-                            # Init.
-                            file_key = '{sub_package}/{file_name}'.format(
-                                sub_package=sub_package_name, 
-                                file_name=file_name
-                            )
-                            file_obj.join([sub_package_name, file_name])
-                            if not file_obj.exists():
-                                print(file_obj)
-                                sys.exit()
-                        else:
-                            file_key = file_name
-                            file_obj.join(file_key)
-
-                        # Discovery should be bi-directional.
-                        checksum = file_obj.checksum()
-                        if file_key in package:
-                            # Compare checksums.
-                            if package['files'][file_key]['checksum'] != checksum:
-                                package['files'][file_key]['checksum'] = checksum
-                        else:
-                            # Insert.
-                            package['files'][file_key] = {
-                                'checksum': checksum
-                            }
-            
-            # Not discoverabe, probably secret.
-            else:
-                for file_key in package['files']:
-                    file_obj = File(fp=package['dir'])
-                    file_obj.join(file_key)                    
-                    checksum = file_obj.checksum()
-                    package['files'][file_key]['checksum'] = checksum
-
-            # Update branch.
-            branch[package_name] = package
-
-        return branch
 
     def get_remote_files(self):
         #return [entry for entry in self.service.files_list_folder('').entries]
