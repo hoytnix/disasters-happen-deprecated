@@ -2,6 +2,14 @@ import sys
 
 from .secret import secret_key, app_key
 
+def Service(service_name):
+    s = None
+    if service_name == 'Dropbox':
+        s = Dropbox()
+    else: #Default to Dropbox
+        s = Dropbox()
+    return s
+
 class Dropbox:
     def __init__(self):
         from dropbox.client import DropboxClient

@@ -5,9 +5,12 @@ from Disasterous.paths  import fp_json, fp_branches
 from Disasterous.jsondb import Jsondb
 
 class LocalFS:
-    def __init__(self, branch='local'):
+    def __init__(self, config):
+        # Config.
+        self.config = config
+
         # Branch.
-        self.branch_json = Jsondb(fp=fp_branches[branch])
+        self.branch_json = Jsondb(fp=fp_branches[self.config.branch])
         self.branch_store = self.branch_json.store
 
         # File tracking.
@@ -19,27 +22,34 @@ class LocalFS:
         self.branch_json.save()
 
     def track_files(self):
-        package_names = [key for key in self.track_store.keys()]
-        for package_name in package_names:
+        for package_name in self.track_store:
             package = self.track_store[package_name]
             package_file = File(package['dir'])
             package_top_dir = package_file.path
 
+            # Make a list of potential files.
+            package_files = []
             if package['discoverable']:
                 for dirpath, dirnames, filenames in os.walk(package_top_dir):
                     package_dir = dirpath.replace(package_top_dir, '')
-                    
                     for file_name in filenames:
                         if package_dir.__len__() != 0:
                             package_file.join([package_dir, file_name])
                         else:
                             package_file.join(file_name)
-                        
-                        self.branch_store[package_file.last_path] = package_file.json()
-
+                        package_files.append(package_file.last_path)
             else:
                 for file_name in package_file['files']:
                     package_file.join([package_name, file_name])
+                    package_files.append(package_file.last_path)
+                
+            # Compare to ignored names.
+            for file_name in package_files:
+                track = True
+                for ignore_key in self.config.ignore:
+                    if ignore_key in file_name:
+                        track = False
+                if track:
                     self.branch_store[package_file.last_path] = package_file.json()
 
 class File:
@@ -73,6 +83,7 @@ class File:
         elif type(path) is list:
             path = [x[1:] if x[0] is '/' else x for x in path]
             self.last_path = os.path.join(self.path, *path)
+        return self.last_path
 
     def checksum(self):
         try:

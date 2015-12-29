@@ -31,7 +31,8 @@ v0.2
 +   Configuration:
     + `[✓]` Seperate `branches` database from config of *what* to track.
     + `[✓]` Persistent config file.
-    + `[ ]` Tracking should have `.gitignore`-like regex for ignoring files.
+    + `[✓]` Tracking should have `.gitignore`-like regex for ignoring files.
+        + `[ ]` Should also be available on a package-specific level. 
 
 +   Installation:
     + `[ ]` Step-by-step walkthrough for setting up an API key.

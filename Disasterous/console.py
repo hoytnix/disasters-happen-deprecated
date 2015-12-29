@@ -19,7 +19,11 @@ class Console:
         self.height = self.term_size[1]
 
     def secho(self, msg):
-        print(msg)
+        if type(msg) is str:
+            print(msg)
+        if type(msg) is list:
+            for x in msg:
+                print(x + '\n')
 
     def echo(self, args):
         # 1. Determine non-variable space. (For helpful recommendations.)

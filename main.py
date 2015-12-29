@@ -4,7 +4,7 @@ from time import strftime
 
 from Disasterous.console  import Console
 from Disasterous.fs       import File, LocalFS
-from Disasterous.services import Dropbox
+from Disasterous.services import Service
 from Disasterous.config   import Config
 from Disasterous.paths    import fp_json
 from Disasterous.jsondb   import Jsondb
@@ -18,16 +18,22 @@ class MyApp:
         if self.config.verbosity:
             self.term = Console()
 
-        # Init API service.
-        self.service = self.init_service()
-
-        # Be polite.
+        # ...
         if self.config.verbosity:
-            msg = 'Welcome!\nLogged in to {service}...\n'.format(service=self.config.service)
-            self.term.secho(msg)
+            self.term.secho(['Hello!'])
+
+        # Init API service.
+        self.service = Service(self.config.service)
+
+        # ...
+        if self.config.verbosity:
+            self.term.secho(['Logged in to {service}...'.format(service=self.config.service)])
+            self.term.secho('Loading LocalFS...')
 
         # Persistent storage.
-        local = LocalFS(branch=self.config.branch)
+        local = LocalFS(config=self.config)
+        if self.config.verbosity:
+            self.term.secho('Succesfully loaded LocalFS!')
 
         # Populate.
         #self.remote_files = self.get_remote_files()
@@ -35,15 +41,6 @@ class MyApp:
 
         # Backup!
         #self.push()
-
-    def init_service(self):
-        s = None
-        name = self.config.service
-        if name == 'Dropbox':
-            s = Dropbox()
-        else: #Default to Dropbox
-            s = Dropbox()
-        return s.service
 
     def push(self):
         # Init.

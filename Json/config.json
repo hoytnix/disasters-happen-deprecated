@@ -1,7 +1,7 @@
 {
     "verbosity": true,
     "chunks": "4MB",
-    "ignore": ["secret", "backup"],
+    "ignore": ["secret", "-backup"],
     "development": true,
     "service": "Dropbox",
     "branch": "alisa"

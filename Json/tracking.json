@@ -1,22 +1,6 @@
 {
-    "pictures": {
+    "x": {
         "discoverable": true,
-        "dir": "~/Pictures"
-    },
-    "music": {
-        "discoverable": true,
-        "dir": "~/Music"
-    },
-    "scripts": {
-        "discoverable": true,
-        "dir": "~/bin/scripts"
-    },
-    "backups": {
-        "discoverable": true,
-        "dir": "~/Backups"
-    },
-    "documents": {
-        "discoverable": true,
-        "dir": "~/Documents"
+        "dir": "~/hello"
     }
 }
