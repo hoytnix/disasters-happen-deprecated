@@ -27,22 +27,26 @@ v0.2
     + `[✓]` Console-class for TUI.
     + `[✓]` File-class.
     + `[✓]` Service-class interface for adding multiple API supports.
+
 +   Configuration:
-    + Seperate `branches` database from config of *what* to track.
-    + `[✓]` Universal config file:
-        + Chunk size.
-        + Verbosity.
+    + `[✓]` Seperate `branches` database from config of *what* to track.
+    + `[✓]` Persistent config file.
     + `[ ]` Tracking should have `.gitignore`-like regex for ignoring files.
+
 +   Installation:
-    + Step-by-step walkthrough for setting up an API key.
-    + `secret.py`-file generation.
-+   TUI:
-    + `[✓]` Time precision. 
-    + Real speed test.
-    + `[✓]` Replace `~/` with blank-space. (It's *secret* for a reason.)
-+   Packaging:
+    + `[ ]` Step-by-step walkthrough for setting up an API key.
+    + `[ ]` `secret.py`-file generation.
+
++   LocalFS:
     + `[✓]` Multi-level folder discovery 
-+   Files:
-    + Deletion mode
-    + Rename mode
+    + `[✓]` Replace `~/` with blank-space. (It's *secret* for a reason.)
     + `[✓]` Properties. (size, path, checksum, etc.)
+
++   RemoteFS:
+    + `[ ]` Interaction with service-class.
+
++   SyncFS:
+    + `[ ]` File-mode detection:
+        + `[ ]` Deletion; file no longer exists on LocalFS.
+        + `[ ]` Modified; file data has been changed on LocalFS.
+        + `[ ]` Moved; file path has changed on LocalFS.
