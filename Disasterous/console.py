@@ -18,12 +18,16 @@ class Console:
         self.width = self.term_size[0]
         self.height = self.term_size[1]
 
-    def secho(self, msg):
+    def secho(self, msg, n=False):
         if type(msg) is str:
+            if n:
+                msg += '\n'
             print(msg)
         if type(msg) is list:
             for x in msg:
-                print(x + '\n')
+                if n:
+                    x += '\n'
+                print(x)
 
     def echo(self, args):
         # 1. Determine non-variable space. (For helpful recommendations.)

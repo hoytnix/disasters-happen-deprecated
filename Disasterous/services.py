@@ -1,6 +1,6 @@
 import sys
 
-from .secret import secret_key, app_key
+from .secret import secret_key
 
 def Service(service_name):
     s = None

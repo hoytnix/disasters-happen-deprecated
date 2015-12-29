@@ -35,8 +35,8 @@ v0.2
         + `[ ]` Should also be available on a package-specific level. 
 
 +   Installation:
-    + `[ ]` Step-by-step walkthrough for setting up an API key.
-    + `[ ]` `secret.py`-file generation.
+    + `[✓]` Step-by-step walkthrough for setting up an API key.
+    + `[✓]` `secret.py`-file generation.
 
 +   LocalFS:
     + `[✓]` Multi-level folder discovery 
