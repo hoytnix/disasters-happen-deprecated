@@ -4,6 +4,31 @@ from hashlib import md5
 from Disasterous.paths  import fp_json, fp_branches
 from Disasterous.jsondb import Jsondb
 
+class SyncFS:
+    def __init__(self, service):
+        self.service = service
+        print(service)
+
+    def push(self):
+        pass
+
+    def pull(self):
+        pass
+
+    def file_mode(self):
+        # 1. Check if last know file-location exists.
+        # ...
+
+        # 2. If so, see if the data has changed. (diff)
+        # ...
+
+        # 3. If not, see if the same data is anywhere else. (mv)
+        # ...
+
+        # 4. Otherwise, mark the file as removed. (rm)
+        # ...
+
+
 class LocalFS:
     def __init__(self, config):
         # Config.
@@ -50,7 +75,8 @@ class LocalFS:
                     if ignore_key in file_name:
                         track = False
                 if track:
-                    self.branch_store[package_file.last_path] = package_file.json()
+                    file_obj = File(file_name)
+                    self.branch_store[file_obj.last_path] = file_obj.json()
 
 class File:
     def __init__(self, fp):

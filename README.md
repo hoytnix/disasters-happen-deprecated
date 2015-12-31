@@ -45,9 +45,21 @@ v0.2
 
 +   RemoteFS:
     + `[ ]` Interaction with service-class.
+    + `[ ]` Methods:
+        + `[ ]` Push
+        + `[ ]` Pull
 
 +   SyncFS:
     + `[ ]` File-mode detection:
         + `[ ]` Deletion; file no longer exists on LocalFS.
         + `[ ]` Modified; file data has been changed on LocalFS.
         + `[ ]` Moved; file path has changed on LocalFS.
+
+
+
+By v1.0
+
++   Services:
+    + `[ ]` Google Drive
+    + `[ ]` s/FTP
+    + `[ ]` Amazon services
