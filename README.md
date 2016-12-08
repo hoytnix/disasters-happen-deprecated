@@ -3,6 +3,9 @@ Disasters Happen
 
 Are *you* prepared?
 
+## UPDATE:
+
+This code base has been deprecated because the intended functionality can be found in the application [Duplicati](http://www.duplicati.com/).
 
 
 Changes
